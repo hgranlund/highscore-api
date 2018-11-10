@@ -25,7 +25,9 @@ namespace HighscoreServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddSwaggerDocumentation()
+            .AddMvc()
+            .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -40,8 +42,9 @@ namespace HighscoreServer
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
-            app.UseMvc();
+            app.UseHttpsRedirection()
+            .UseSwaggerDocumentation()
+            .UseMvc();
         }
     }
 }
