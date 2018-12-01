@@ -7,6 +7,11 @@ using HighscoreApi.Entities;
 
 namespace HighscoreApi.Repositories
 {
+  public enum PlayersRepositoryStatus
+  {
+    Updated,
+    NotFound
+  }
 
   public class PlayersRepository : IPlayersRepository
   {
@@ -23,7 +28,7 @@ namespace HighscoreApi.Repositories
       return _dbContext.Players.FirstOrDefault(x => x.PlayerId == id);
     }
 
-    public async Task<PlayerResponse> Add(PlayerCreate playerCreate)
+    public async Task<PlayerResponse> Add(PlayerUpsert playerCreate)
     {
       var player = new Player { Name = playerCreate.Name };
       _dbContext.Players.Add(player);
@@ -32,17 +37,30 @@ namespace HighscoreApi.Repositories
 
       return new PlayerResponse { Name = player.Name, Id = player.PlayerId };
     }
+    public async Task<(PlayersRepositoryStatus Status, PlayerResponse Player)> Update(int id, PlayerUpsert player)
+    {
+      var playerToUpdate = await _dbContext.Players.FindAsync(id);
+      if (playerToUpdate == null)
+      {
+        return (PlayersRepositoryStatus.NotFound, null);
+      }
+
+      playerToUpdate.Name = player.Name;
+      await _dbContext.SaveChangesAsync();
+
+      var response = new PlayerResponse
+      {
+        Id = playerToUpdate.PlayerId,
+        Name = playerToUpdate.Name
+      };
+
+      return (PlayersRepositoryStatus.Updated, response);
+    }
 
     public void Delete(int id)
     {
       Player player = GetSingle(id);
       _dbContext.Players.Remove(player);
-    }
-
-    public Player Update(int id, Player item)
-    {
-      _dbContext.Players.Update(item);
-      return item;
     }
 
     public int Count()
