@@ -10,7 +10,8 @@ namespace HighscoreApi.Repositories
   public enum PlayersRepositoryStatus
   {
     Updated,
-    NotFound
+    NotFound,
+    Deleted
   }
 
   public class PlayersRepository : IPlayersRepository
@@ -30,12 +31,16 @@ namespace HighscoreApi.Repositories
 
     public async Task<PlayerResponse> Add(PlayerUpsert playerCreate)
     {
-      var player = new Player { Name = playerCreate.Name };
+      var player = new Player { Name = playerCreate.Name, Created = DateTime.Now };
       _dbContext.Players.Add(player);
       await _dbContext.SaveChangesAsync();
       await _dbContext.Entry(player).ReloadAsync();
 
-      return new PlayerResponse { Name = player.Name, Id = player.PlayerId };
+      return new PlayerResponse
+      {
+        Name = player.Name,
+        Id = player.PlayerId
+      };
     }
     public async Task<(PlayersRepositoryStatus Status, PlayerResponse Player)> Update(int id, PlayerUpsert player)
     {
@@ -57,10 +62,15 @@ namespace HighscoreApi.Repositories
       return (PlayersRepositoryStatus.Updated, response);
     }
 
-    public void Delete(int id)
+    public async Task<PlayersRepositoryStatus> Delete(int id)
     {
-      Player player = GetSingle(id);
+      var player = await _dbContext.Players.FindAsync(id);
+      if (player == null)
+      {
+        return PlayersRepositoryStatus.NotFound;
+      }
       _dbContext.Players.Remove(player);
+      return PlayersRepositoryStatus.Deleted;
     }
 
     public int Count()

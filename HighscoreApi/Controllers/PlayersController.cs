@@ -62,6 +62,19 @@ namespace HighscoreApi.Controllers
     }
 
     [HttpDelete("{id}")]
-    public void DeletePlayer(int id) { }
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
+    public async Task<ActionResult<int>> DeletePlayer(int id)
+    {
+      var status = await _repo.Delete(id);
+
+      switch (status)
+      {
+        case PlayersRepositoryStatus.Deleted:
+          return Ok(id);
+        default:
+          return NotFound(id);
+      }
+    }
   }
 }

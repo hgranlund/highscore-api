@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
-namespace HighscoreApi.Entities {
+namespace HighscoreApi.Entities
+{
 
-  public class Player {
+  public class Player
+  {
     [Key]
     public int PlayerId { get; set; }
 
@@ -15,10 +18,12 @@ namespace HighscoreApi.Entities {
 
     [Required]
     public DateTime Created { get; set; }
+
     public ICollection<Result> Results { get; set; }
   }
 
-  public class Score {
+  public class Score
+  {
     [Key]
     public int ScoreId { get; set; }
 
@@ -29,7 +34,8 @@ namespace HighscoreApi.Entities {
 
   }
 
-  public class Result {
+  public class Result
+  {
     [Key]
     public int ResultId { get; set; }
     public ICollection<Score> Scores { get; set; }
