@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using HighscoreApi.Models;
+using HighscoreApi.Repositories;
+using HighscoreApi.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -15,31 +16,32 @@ using Microsoft.Extensions.Options;
 
 namespace HighscoreApi {
     public class Startup {
-        public Startup (IConfiguration configuration) {
+        public Startup(IConfiguration configuration) {
             Configuration = configuration;
         }
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices (IServiceCollection services) {
-            services.AddSwaggerDocumentation ()
-                .AddDbContext<HighscoreContext> ()
-                .AddMvc ()
-                .SetCompatibilityVersion (CompatibilityVersion.Version_2_1);
+        public void ConfigureServices(IServiceCollection services) {
+            services.AddSwaggerDocumentation()
+                .AddScoped<IPlayersRepository, PlayersRepository>()
+                .AddSingleton<ISeedDataService, SeedDataService>()
+                .AddDbContext<HighscoreContext>()
+                .AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure (IApplicationBuilder app, IHostingEnvironment env) {
-            if (env.IsDevelopment ()) {
-                app.UseDeveloperExceptionPage ();
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
+            if (env.IsDevelopment()) {
+                app.UseDeveloperExceptionPage();
             } else {
-                app.UseHsts ();
+                app.UseHsts()
+                    .UseHttpsRedirection();
             }
 
-            app.UseHttpsRedirection ()
-                .UseSwaggerDocumentation ()
-                .UseMvc ();
+            app
+                .UseSwaggerDocumentation()
+                .UseMvc();
         }
     }
 }
