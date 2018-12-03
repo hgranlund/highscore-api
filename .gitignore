@@ -80,3 +80,6 @@ _NCrunch_*
 
 
 highscore.db
+
+*.sln
+HighscoreApi/Migrations/

@@ -14,34 +14,41 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace HighscoreApi {
-    public class Startup {
-        public Startup(IConfiguration configuration) {
-            Configuration = configuration;
-        }
-
-        public IConfiguration Configuration { get; }
-
-        public void ConfigureServices(IServiceCollection services) {
-            services.AddSwaggerDocumentation()
-                .AddScoped<IPlayersRepository, PlayersRepository>()
-                .AddSingleton<ISeedDataService, SeedDataService>()
-                .AddDbContext<HighscoreContext>()
-                .AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
-        }
-
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env) {
-            if (env.IsDevelopment()) {
-                app.UseDeveloperExceptionPage();
-            } else {
-                app.UseHsts()
-                    .UseHttpsRedirection();
-            }
-
-            app
-                .UseSwaggerDocumentation()
-                .UseMvc();
-        }
+namespace HighscoreApi
+{
+  public class Startup
+  {
+    public Startup(IConfiguration configuration)
+    {
+      Configuration = configuration;
     }
+
+    public IConfiguration Configuration { get; }
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+      services.AddSwaggerDocumentation()
+          .AddScoped<IPlayersRepository, PlayersRepository>()
+          .AddDbContext<HighscoreContext>(options => options.UseSqlite("Data Source=highscore.db"))
+          .AddMvc()
+          .SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+    }
+
+    public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+    {
+      if (env.IsDevelopment())
+      {
+        app.UseDeveloperExceptionPage();
+      }
+      else
+      {
+        app.UseHsts()
+            .UseHttpsRedirection();
+      }
+
+      app
+          .UseSwaggerDocumentation()
+          .UseMvc();
+    }
+  }
 }

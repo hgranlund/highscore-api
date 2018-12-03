@@ -7,7 +7,7 @@ namespace HighscoreApi.Repositories
 {
   public interface IPlayersRepository
   {
-    Player GetSingle(int id);
+    Task<(PlayersRepositoryStatus Status, PlayerResponse Player)> GetSingle(int id);
     Task<PlayerResponse> Add(PlayerUpsert playerCreate);
     Task<(PlayersRepositoryStatus Status, PlayerResponse Player)> Update(int id, PlayerUpsert player);
     Task<PlayersRepositoryStatus> Delete(int id);

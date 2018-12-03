@@ -28,24 +28,25 @@ namespace HighscoreApi.Controllers
     }
 
     [HttpGet("{id}", Name = "GetSinglePlayer")]
-    public ActionResult<PlayerResponse> GetSinglePlayer(int id)
+    public async Task<ActionResult<PlayerResponse>> GetSinglePlayer(int id)
     {
-      Player player = _repo.GetSingle(id);
-
-      if (player == null)
+      var (status, player) = await _repo.GetSingle(id); ;
+      switch (status)
       {
-        return NotFound();
+        case PlayersRepositoryStatus.NotFound: return NotFound(id);
+        default: return Ok(player);
       }
-
-      return Ok(player);
     }
 
     [HttpPost(Name = nameof(AddPlayer))]
-    public async Task<ActionResult<Player>> AddPlayer([FromBody] PlayerUpsert playerCreate)
+    public async Task<ActionResult<PlayerResponse>> AddPlayer([FromBody] PlayerUpsert playerCreate)
     {
+      if (!ModelState.IsValid)
+      {
+        return BadRequest(ModelState);
+      }
       var newPlayer = await _repo.Add(playerCreate);
-      return CreatedAtRoute("GetSinglePlayer", new { id = newPlayer.Id },
-          newPlayer);
+      return CreatedAtRoute("GetSinglePlayer", new { id = newPlayer.Id }, newPlayer);
     }
 
     [HttpPut("{id:int}")]
