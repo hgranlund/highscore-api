@@ -8,14 +8,16 @@ using Microsoft.Extensions.DependencyInjection;
 using FluentAssertions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace HighscoreApi.Tests
 {
-  public class PlayerResourceTest
+  public class PlayerResource
   {
     private readonly PlayersController _controller;
 
-    public PlayerResourceTest()
+    public PlayerResource()
     {
       var services = new ServiceCollection()
         .AddScoped<IPlayersRepository, PlayersRepository>()
@@ -24,26 +26,14 @@ namespace HighscoreApi.Tests
 
       _controller = new PlayersController(services.GetService<IPlayersRepository>());
     }
-
-    protected PlayerResponse GetPlayerFromResponse(ActionResult<PlayerResponse> response)
+    public async Task<PlayerResponse> CreatePlayer(string name)
     {
-      if (response.Result is CreatedAtRouteResult)
-      {
-        var created = (CreatedAtRouteResult)response.Result;
-        return (PlayerResponse)created.Value;
-      }
-      else if (response.Result is ObjectResult)
-      {
-        var created = (ObjectResult)response.Result;
-        return (PlayerResponse)created.Value;
-      }
-      else
-      {
-        throw new Exception("Unable to get PlayerResponse");
-      }
+      var newPlayer = new PlayerUpsert { Name = name };
+      var response = await _controller.AddPlayer(newPlayer);
+      return response.Get<PlayerResponse>();
     }
 
-    public class WhenCreatingPlayer : PlayerResourceTest
+    public class WhenAddingPlayer : PlayerResource
     {
       [Fact]
       public async Task WithALegalInput_APlayerShouldBeCreated()
@@ -52,38 +42,63 @@ namespace HighscoreApi.Tests
         var response = await _controller.AddPlayer(newPlayer);
 
         response.Result.Should().BeOfType<CreatedAtRouteResult>();
-
-        PlayerResponse player = GetPlayerFromResponse(response);
-        player.Name.Should().Be(newPlayer.Name);
-        player.Id.Should().NotBe(0);
+        response.Get<PlayerResponse>().Name.Should().Be(newPlayer.Name);
       }
     }
-    public class WhenGettingSinglePlayer : PlayerResourceTest, IAsyncLifetime
+    public class WhenGettingSinglePlayer : PlayerResource
     {
-      private PlayerResponse existingPlayer;
-      public async Task InitializeAsync()
-      {
-        var newPlayer = new PlayerUpsert { Name = "Existing Dalek" };
-        var result = await _controller.AddPlayer(newPlayer);
-        existingPlayer = GetPlayerFromResponse(result);
-      }
-
-      public Task DisposeAsync()
-      {
-        return Task.CompletedTask;
-      }
 
       [Fact]
       public async Task AndPlayerExists_ShouldReturnThePlayer()
       {
-        var response = await _controller.GetSinglePlayer(existingPlayer.Id);
-        GetPlayerFromResponse(response).Name.Should().Be(existingPlayer.Name);
+        var player = await CreatePlayer("Davros Dalek");
+        var response = await _controller.GetSinglePlayer(player.Id);
+        response.Get<PlayerResponse>().Name.Should().Be(player.Name);
       }
 
       [Fact]
       public async Task AndPlayerDontExixts_ShouldReturnNotFound()
       {
         var response = await _controller.GetSinglePlayer(123456);
+        response.Result.Should().BeOfType<NotFoundObjectResult>();
+      }
+    }
+    public class WhenDeletingPlayer : PlayerResource
+    {
+      [Fact]
+      public async Task AndPlayerExists_ShouldDeleteThePlayer()
+      {
+        var player = await CreatePlayer("Davros Dalek");
+        await _controller.DeletePlayer(player.Id);
+        var response = await _controller.GetSinglePlayer(player.Id);
+        response.Result.Should().BeOfType<NotFoundObjectResult>();
+      }
+
+      [Fact]
+      public async Task AndPlayerDontExixts_ShouldReturnNotFound()
+      {
+        var response = await _controller.DeletePlayer(123456);
+        response.Result.Should().BeOfType<NotFoundObjectResult>();
+      }
+    }
+    public class WhenGettingAllPlayers : PlayerResource
+    {
+      [Fact]
+      public async Task ShouldReturnAllPlayers()
+      {
+        var playersToCreate = new List<string>() { "Davros Dalek", "Doctor Who" };
+        var createdPlayers = playersToCreate.Select(async name => await CreatePlayer(name))
+                              .Select(task => task.Result).ToList();
+
+        var response = await _controller.GetAllPlayers();
+        var players = response.Get<IEnumerable<PlayerResponse>>().ToList();
+        players.Should().BeEquivalentTo(createdPlayers);
+      }
+
+      [Fact]
+      public async Task AndPlayerDontExixts_ShouldReturnNotFound()
+      {
+        var response = await _controller.DeletePlayer(123456);
         response.Result.Should().BeOfType<NotFoundObjectResult>();
       }
     }

@@ -13,6 +13,6 @@ namespace HighscoreApi.Repositories
     Task<PlayersRepositoryStatus> Delete(int id);
     int Count();
     bool Save();
-    IEnumerable<Player> GetAll();
+    Task<IEnumerable<PlayerResponse>> GetAll();
   }
 }

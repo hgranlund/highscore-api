@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using HighscoreApi.Dto;
 using HighscoreApi.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace HighscoreApi.Repositories
 {
@@ -64,13 +65,7 @@ namespace HighscoreApi.Repositories
       playerToUpdate.Name = player.Name;
       await _dbContext.SaveChangesAsync();
 
-      var response = new PlayerResponse
-      {
-        Id = playerToUpdate.PlayerId,
-        Name = playerToUpdate.Name
-      };
-
-      return (PlayersRepositoryStatus.Updated, response);
+      return (PlayersRepositoryStatus.Updated, MapPlayerToPlayerResponse(playerToUpdate));
     }
 
     public async Task<PlayersRepositoryStatus> Delete(int id)
@@ -81,6 +76,7 @@ namespace HighscoreApi.Repositories
         return PlayersRepositoryStatus.NotFound;
       }
       _dbContext.Players.Remove(player);
+      await _dbContext.SaveChangesAsync();
       return PlayersRepositoryStatus.Deleted;
     }
 
@@ -94,9 +90,19 @@ namespace HighscoreApi.Repositories
       return (_dbContext.SaveChanges() >= 0);
     }
 
-    public IEnumerable<Player> GetAll()
+    public async Task<IEnumerable<PlayerResponse>> GetAll()
     {
-      return _dbContext.Players.AsEnumerable();
+      var players = await _dbContext.Players.AsQueryable().ToListAsync();
+      return players.Select(MapPlayerToPlayerResponse);
+    }
+
+    private PlayerResponse MapPlayerToPlayerResponse(Player player)
+    {
+      return new PlayerResponse
+      {
+        Id = player.PlayerId,
+        Name = player.Name
+      };
     }
   }
 }
