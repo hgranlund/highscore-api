@@ -51,6 +51,20 @@ namespace HighscoreApi.Tests
         var response = await _controller.GetAllPlayers();
         response.Get<IEnumerable<PlayerResponse>>().Should().BeEmpty();
       }
+
+      [Fact]
+      public async void ShouldNotBeAbleToDeletePlayer()
+      {
+        var response = await _controller.DeletePlayer(1);
+        response.Result.Should().BeOfType<NotFoundObjectResult>();
+      }
+
+      [Fact]
+      public async void ShouldNotBeAbleToUpdatePlayer()
+      {
+        var response = await _controller.UpdatePlayer(1, new PlayerUpsert());
+        response.Result.Should().BeOfType<NotFoundObjectResult>();
+      }
     }
 
     public class WhenAPlayerHasBeenAdded : GivenAPlayerController, IAsyncLifetime
@@ -58,7 +72,7 @@ namespace HighscoreApi.Tests
       public PlayerResponse existingPlayer;
       public async Task InitializeAsync()
       {
-        existingPlayer = await CreatePlayer("Davros Dalek");
+        existingPlayer = await CreatePlayer("Existing Dalek");
       }
 
       public Task DisposeAsync()
@@ -80,6 +94,14 @@ namespace HighscoreApi.Tests
 
         var response = await _controller.GetSinglePlayer(existingPlayer.Id);
         response.Result.Should().BeOfType<NotFoundObjectResult>();
+      }
+
+      [Fact]
+      public async void ShouldBeAbleToUpdatePlayer()
+      {
+        var updatedPlayer = new PlayerUpsert() { Name = "Updated Dalek" };
+        var response = await _controller.UpdatePlayer(existingPlayer.Id, updatedPlayer);
+        response.Get<PlayerResponse>().Name.Should().Be(updatedPlayer.Name);
       }
       [Fact]
       public async void ShouldNotBeAbleToGetANonExistingPlayer()

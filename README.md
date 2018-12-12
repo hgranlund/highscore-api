@@ -24,14 +24,14 @@ dotnet build
 4. Run:
 
 ```
-cd HighscoreApi
+cd ./HighscoreApi/
 dotnet run
 ```
 
 5. Test:
 
 ```
-cd HighscoreApi.Test
+cd ./HighscoreApi.Test/
 dotnet test
 ```
 
@@ -39,12 +39,12 @@ dotnet test
 
 To scaffold a migration and create the initial set of tables for the model, run:
 
-    dotnet ef migrations add MigrationName
+```
+dotnet ef migrations add MigrationName
+```
 
 To apply the new migration to the database, run:
 
-    dotnet ef database update
-
 ```
-
+dotnet ef database update
 ```

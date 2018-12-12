@@ -18,26 +18,5 @@ namespace HighscoreApi.Entities
 
     [Required]
     public DateTime Created { get; set; }
-
-    public ICollection<Result> Results { get; set; }
-  }
-
-  public class Score
-  {
-    [Key]
-    public int ScoreId { get; set; }
-
-    [Required]
-    public int PlayerScore { get; set; }
-    public int PlayerId { get; set; }
-    public Player Player { get; set; }
-
-  }
-
-  public class Result
-  {
-    [Key]
-    public int ResultId { get; set; }
-    public ICollection<Score> Scores { get; set; }
   }
 }
