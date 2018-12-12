@@ -80,16 +80,6 @@ namespace HighscoreApi.Repositories
       return PlayersRepositoryStatus.Deleted;
     }
 
-    public int Count()
-    {
-      return _dbContext.Players.Count();
-    }
-
-    public bool Save()
-    {
-      return (_dbContext.SaveChanges() >= 0);
-    }
-
     public async Task<IEnumerable<PlayerResponse>> GetAll()
     {
       var players = await _dbContext.Players.AsQueryable().ToListAsync();

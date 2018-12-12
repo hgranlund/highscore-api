@@ -25,11 +25,7 @@ namespace HighscoreApi.Controllers
     public async Task<ActionResult<IEnumerable<PlayerResponse>>> GetAllPlayers()
     {
       var allPlayers = await _repo.GetAll();
-      if (allPlayers.Any())
-      {
-        return Ok(allPlayers);
-      }
-      return NoContent();
+      return Ok(allPlayers);
     }
 
     [HttpGet("{id}", Name = "GetSinglePlayer")]

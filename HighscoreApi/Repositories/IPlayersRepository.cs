@@ -11,8 +11,6 @@ namespace HighscoreApi.Repositories
     Task<PlayerResponse> Add(PlayerUpsert playerCreate);
     Task<(PlayersRepositoryStatus Status, PlayerResponse Player)> Update(int id, PlayerUpsert player);
     Task<PlayersRepositoryStatus> Delete(int id);
-    int Count();
-    bool Save();
     Task<IEnumerable<PlayerResponse>> GetAll();
   }
 }

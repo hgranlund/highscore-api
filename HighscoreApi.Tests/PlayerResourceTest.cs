@@ -13,11 +13,11 @@ using System.Linq;
 
 namespace HighscoreApi.Tests
 {
-  public class PlayerResource
+  public class GivenAPlayerController
   {
     private readonly PlayersController _controller;
 
-    public PlayerResource()
+    public GivenAPlayerController()
     {
       var services = new ServiceCollection()
         .AddScoped<IPlayersRepository, PlayersRepository>()
@@ -33,73 +33,92 @@ namespace HighscoreApi.Tests
       return response.Get<PlayerResponse>();
     }
 
-    public class WhenAddingPlayer : PlayerResource
+    public class WhenNoPlayersHasBeenAdded : GivenAPlayerController
     {
+
       [Fact]
-      public async Task WithALegalInput_APlayerShouldBeCreated()
+      public async Task ShouldBeAbleToAddValidPlayer()
       {
         var newPlayer = new PlayerUpsert { Name = "Davros Dalek" };
         var response = await _controller.AddPlayer(newPlayer);
-
+        Console.WriteLine("En Gang");
         response.Result.Should().BeOfType<CreatedAtRouteResult>();
         response.Get<PlayerResponse>().Name.Should().Be(newPlayer.Name);
       }
-    }
-    public class WhenGettingSinglePlayer : PlayerResource
-    {
 
       [Fact]
-      public async Task AndPlayerExists_ShouldReturnThePlayer()
+      public async void ShouldNotBeAnyPlayersInStore()
       {
-        var player = await CreatePlayer("Davros Dalek");
-        var response = await _controller.GetSinglePlayer(player.Id);
-        response.Get<PlayerResponse>().Name.Should().Be(player.Name);
+        var response = await _controller.GetAllPlayers();
+        response.Get<IEnumerable<PlayerResponse>>().Should().BeEmpty();
+      }
+    }
+
+    public class WhenAPlayerHasBeenAdded : GivenAPlayerController, IAsyncLifetime
+    {
+      public PlayerResponse existingPlayer;
+      public async Task InitializeAsync()
+      {
+        existingPlayer = await CreatePlayer("Davros Dalek");
+      }
+
+      public Task DisposeAsync()
+      {
+        return Task.CompletedTask;
       }
 
       [Fact]
-      public async Task AndPlayerDontExixts_ShouldReturnNotFound()
+      public async Task ShouldBeAbleToGetPlayer()
       {
-        var response = await _controller.GetSinglePlayer(123456);
+        var response = await _controller.GetSinglePlayer(existingPlayer.Id);
+        response.Get<PlayerResponse>().Should().BeEquivalentTo(existingPlayer);
+      }
+
+      [Fact]
+      public async void ShouldBeAbleToDeletePlayer()
+      {
+        await _controller.DeletePlayer(existingPlayer.Id);
+
+        var response = await _controller.GetSinglePlayer(existingPlayer.Id);
+        response.Result.Should().BeOfType<NotFoundObjectResult>();
+      }
+      [Fact]
+      public async void ShouldNotBeAbleToGetANonExistingPlayer()
+      {
+        var response = await _controller.GetSinglePlayer(1233);
         response.Result.Should().BeOfType<NotFoundObjectResult>();
       }
     }
-    public class WhenDeletingPlayer : PlayerResource
+
+    public class WhenSomePlayersHasBeenAdded : GivenAPlayerController, IAsyncLifetime
     {
-      [Fact]
-      public async Task AndPlayerExists_ShouldDeleteThePlayer()
+      public List<PlayerResponse> existingPlayers;
+      public async Task InitializeAsync()
       {
-        var player = await CreatePlayer("Davros Dalek");
-        await _controller.DeletePlayer(player.Id);
-        var response = await _controller.GetSinglePlayer(player.Id);
-        response.Result.Should().BeOfType<NotFoundObjectResult>();
+        var dalek = await CreatePlayer("Davros Dalek");
+        var docktor = await CreatePlayer("Doctor Who");
+        existingPlayers = new List<PlayerResponse>() { dalek, docktor };
+      }
+
+      public Task DisposeAsync()
+      {
+        return Task.CompletedTask;
       }
 
       [Fact]
-      public async Task AndPlayerDontExixts_ShouldReturnNotFound()
+      public async Task ShouldBeAbleToGetAllPlayers()
       {
-        var response = await _controller.DeletePlayer(123456);
-        response.Result.Should().BeOfType<NotFoundObjectResult>();
-      }
-    }
-    public class WhenGettingAllPlayers : PlayerResource
-    {
-      [Fact]
-      public async Task ShouldReturnAllPlayers()
-      {
-        var playersToCreate = new List<string>() { "Davros Dalek", "Doctor Who" };
-        var createdPlayers = playersToCreate.Select(async name => await CreatePlayer(name))
-                              .Select(task => task.Result).ToList();
-
         var response = await _controller.GetAllPlayers();
         var players = response.Get<IEnumerable<PlayerResponse>>().ToList();
-        players.Should().BeEquivalentTo(createdPlayers);
+        players.Should().BeEquivalentTo(existingPlayers);
       }
 
       [Fact]
-      public async Task AndPlayerDontExixts_ShouldReturnNotFound()
+      public async Task ShouldBeAbleToGetPlayer()
       {
-        var response = await _controller.DeletePlayer(123456);
-        response.Result.Should().BeOfType<NotFoundObjectResult>();
+        var existingPlayer = existingPlayers.Last();
+        var response = await _controller.GetSinglePlayer(existingPlayer.Id);
+        response.Get<PlayerResponse>().Name.Should().Be(existingPlayer.Name);
       }
     }
   }
