@@ -24,7 +24,7 @@ test_script:
   - ps:
       dotnet minicover uninstrument --workdir ../
       # Create a OpenCover-formatted report
-  - ps: dotnet minicover opencoverreport --workdir ../ --threshold 65
+  - ps: dotnet minicover opencoverreport --workdir ../ --threshold 1
   - ps: cd ..
 after_test:
   - ps: |

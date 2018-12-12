@@ -41,7 +41,6 @@ namespace HighscoreApi.Tests
       {
         var newPlayer = new PlayerUpsert { Name = "Davros Dalek" };
         var response = await _controller.AddPlayer(newPlayer);
-        Console.WriteLine("En Gang");
         response.Result.Should().BeOfType<CreatedAtRouteResult>();
         response.Get<PlayerResponse>().Name.Should().Be(newPlayer.Name);
       }
