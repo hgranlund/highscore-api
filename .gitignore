@@ -83,3 +83,9 @@ highscore.db
 
 *.sln
 HighscoreApi/Migrations/
+
+
+# MiniCover output
+coverage.hits
+coverage.json
+opencovercoverage.xml

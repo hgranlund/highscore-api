@@ -1,0 +1,33 @@
+version: 1.0.0.{build}
+pull_requests:
+  do_not_increment_build_number: true
+image: Visual Studio 2015
+install:
+  - ps: choco install opencover.portable
+  - ps: choco install codecov
+build_script:
+  - ps: dotnet restore ./HighscoreApi.Tests/HighscoreApi.Tests.csproj
+  - ps: dotnet build ./HighscoreApi.Tests/HighscoreApi.Tests.csproj
+test_script:
+  - ps:
+      cd ./HighscoreApi.Tests
+      # Instrument assemblies
+  - ps:
+      dotnet minicover instrument --workdir ../ --assemblies HighscoreApi.Tests/bin/**/*.dll --sources HighscoreApi/**/*.cs
+      # Reset hits count in case minicover was run for this project
+  - ps:
+      dotnet minicover reset
+      # Run tests
+  - ps:
+      dotnet test --no-build
+      # Uninstrument assemblies, it's important if you're going to publish or deploy build outputs
+  - ps:
+      dotnet minicover uninstrument --workdir ../
+      # Create a OpenCover-formatted report
+  - ps: dotnet minicover opencoverreport --workdir ../ --threshold 65
+  - ps: cd ..
+after_test:
+  - ps: |
+      $env:PATH = 'C:\msys64\usr\bin;' + $env:PATH
+      Invoke-WebRequest -Uri 'https://codecov.io/bash' -OutFile codecov.sh
+      bash codecov.sh -f "opencovercoverage.xml"
