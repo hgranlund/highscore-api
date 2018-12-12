@@ -22,13 +22,17 @@ namespace HighscoreApi.Controllers
     }
 
     [HttpGet(Name = nameof(GetAllPlayers))]
+    [ProducesResponseType(200, Type = typeof(IEnumerable<PlayerResponse>))]
     public async Task<ActionResult<IEnumerable<PlayerResponse>>> GetAllPlayers()
     {
       var allPlayers = await _repo.GetAll();
       return Ok(allPlayers);
     }
 
-    [HttpGet("{id}", Name = "GetSinglePlayer")]
+    [HttpGet("{id}", Name = nameof(GetSinglePlayer))]
+    [ProducesResponseType(200, Type = typeof(PlayerResponse))]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(400)]
     public async Task<ActionResult<PlayerResponse>> GetSinglePlayer(int id)
     {
       var (status, player) = await _repo.GetSingle(id); ;
@@ -40,19 +44,19 @@ namespace HighscoreApi.Controllers
     }
 
     [HttpPost(Name = nameof(AddPlayer))]
+    [ProducesResponseType(201, Type = typeof(PlayerResponse))]
+    [ProducesResponseType(400)]
     public async Task<ActionResult<PlayerResponse>> AddPlayer([FromBody] PlayerUpsert playerCreate)
     {
-      if (!ModelState.IsValid)
-      {
-        return BadRequest(ModelState);
-      }
       var newPlayer = await _repo.Add(playerCreate);
-      return CreatedAtRoute("GetSinglePlayer", new { id = newPlayer.Id }, newPlayer);
+      return CreatedAtRoute(nameof(GetSinglePlayer), new { id = newPlayer.Id }, newPlayer);
     }
 
     [HttpPut("{id:int}")]
     [ProducesResponseType(200, Type = typeof(PlayerResponse))]
     [ProducesResponseType(404)]
+    [ProducesResponseType(400)]
+
     public async Task<ActionResult<PlayerResponse>> UpdatePlayer(int id, [FromBody] PlayerUpsert playerUpdate)
     {
       var (status, player) = await _repo.Update(id, playerUpdate);
@@ -64,8 +68,9 @@ namespace HighscoreApi.Controllers
     }
 
     [HttpDelete("{id}")]
-    [ProducesResponseType(200)]
+    [ProducesResponseType(200, Type = typeof(int))]
     [ProducesResponseType(404)]
+    [ProducesResponseType(400)]
     public async Task<ActionResult<int>> DeletePlayer(int id)
     {
       var status = await _repo.Delete(id);
