@@ -19,52 +19,18 @@ namespace HighscoreApi.Tests
 
     public GivenAPlayerController()
     {
-      var services = new ServiceCollection()
+      var provider = new ServiceCollection()
         .AddScoped<IPlayersRepository, PlayersRepository>()
         .AddDbContext<HighscoreContext>(options => options.UseInMemoryDatabase(databaseName: "highscore_in_memory_test"))
         .BuildServiceProvider();
 
-      _controller = new PlayersController(services.GetService<IPlayersRepository>());
+      _controller = new PlayersController(provider.GetService<IPlayersRepository>());
     }
     public async Task<PlayerResponse> CreatePlayer(string name)
     {
       var newPlayer = new PlayerUpsert { Name = name };
       var response = await _controller.AddPlayer(newPlayer);
       return response.Get<PlayerResponse>();
-    }
-
-    public class WhenNoPlayersHasBeenAdded : GivenAPlayerController
-    {
-
-      [Fact]
-      public async Task ShouldBeAbleToAddValidPlayer()
-      {
-        var newPlayer = new PlayerUpsert { Name = "Davros Dalek" };
-        var response = await _controller.AddPlayer(newPlayer);
-        response.Result.Should().BeOfType<CreatedAtRouteResult>();
-        response.Get<PlayerResponse>().Name.Should().Be(newPlayer.Name);
-      }
-
-      [Fact]
-      public async void ShouldNotBeAnyPlayersInStore()
-      {
-        var response = await _controller.GetAllPlayers();
-        response.Get<IEnumerable<PlayerResponse>>().Should().BeEmpty();
-      }
-
-      [Fact]
-      public async void ShouldNotBeAbleToDeletePlayer()
-      {
-        var response = await _controller.DeletePlayer(1);
-        response.Result.Should().BeOfType<NotFoundObjectResult>();
-      }
-
-      [Fact]
-      public async void ShouldNotBeAbleToUpdatePlayer()
-      {
-        var response = await _controller.UpdatePlayer(1, new PlayerUpsert());
-        response.Result.Should().BeOfType<NotFoundObjectResult>();
-      }
     }
 
     public class WhenAPlayerHasBeenAdded : GivenAPlayerController, IAsyncLifetime
@@ -140,6 +106,30 @@ namespace HighscoreApi.Tests
         var existingPlayer = existingPlayers.Last();
         var response = await _controller.GetSinglePlayer(existingPlayer.Id);
         response.Get<PlayerResponse>().Name.Should().Be(existingPlayer.Name);
+      }
+    }
+    public class WhenNoPlayersHasBeenAdded : GivenAPlayerController
+    {
+
+      [Fact]
+      public async void ShouldNotBeAnyPlayersInStore()
+      {
+        var response = await _controller.GetAllPlayers();
+        response.Get<IEnumerable<PlayerResponse>>().Should().BeEmpty();
+      }
+
+      [Fact]
+      public async void ShouldNotBeAbleToDeletePlayer()
+      {
+        var response = await _controller.DeletePlayer(1);
+        response.Result.Should().BeOfType<NotFoundObjectResult>();
+      }
+
+      [Fact]
+      public async void ShouldNotBeAbleToUpdatePlayer()
+      {
+        var response = await _controller.UpdatePlayer(1, new PlayerUpsert());
+        response.Result.Should().BeOfType<NotFoundObjectResult>();
       }
     }
   }
